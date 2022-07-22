@@ -1,3 +1,4 @@
+extern crate reqwest;
 
 // use reqwest;
 use std::io::Read;
@@ -6,8 +7,14 @@ type Error = Box<dyn std::error::Error + Send + Sync>;
 
 const CODES: &str = "https://raw.githubusercontent.com/i1Fury/CodeRaidBot/master/bin/codes.txt";
 
+fn to_err(msg: &str) -> Result<(String, Vec<String>), Error> {
+    Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, msg)))
+}
 
 pub async fn setup() -> Result<(String, Vec<String>), Error> {
+    // return error for testing
+    // return to_err("test");
+
     // Ask the user for their token if one is not an env variable nor saved in token.txt
     let token = std::env::var("DISCORD_TOKEN").unwrap_or_else(|_| {
         // check if the file exists
