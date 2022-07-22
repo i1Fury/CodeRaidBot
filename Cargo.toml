@@ -1,5 +1,5 @@
 [package]
-name = "CodeRaidBot"
+name = "code_raid_bot"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,3 +10,4 @@ tokio = { version = "1.20.0", default-features = false, features = [
     "macros",
 ] }
 poise = "0.2.1"
+reqwest = "0.11.11"
