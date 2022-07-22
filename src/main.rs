@@ -25,14 +25,20 @@ async fn register(ctx: Context<'_>) -> Result<(), Error> {
 
 #[tokio::main]
 async fn main() {
-    // t
-    let framework = poise::Framework::build()
-        .options(poise::FrameworkOptions {
-            commands: vec![age(), register()],
+    let options = poise::FrameworkOptions {
+        commands: vec![age(), register()],
+        prefix_options: poise::PrefixFrameworkOptions {
+            prefix: Some("!".into()),
+            case_insensitive_commands: true,
             ..Default::default()
-        })
+        },
+        ..Default::default()
+    };
+    
+    let framework = poise::Framework::build()
+        .options(options)
         .token(std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN"))
-        .intents(serenity::GatewayIntents::non_privileged())
+        .intents(serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT)
         .user_data_setup(move |_ctx, _ready, _framework| Box::pin(async move { Ok(Data {}) }));
 
     framework.run().await.unwrap();
