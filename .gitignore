@@ -3,3 +3,4 @@ Cargo.lock
 /dev
 codes.txt
 token.txt
+/.vscode

@@ -1,3 +1,5 @@
+use std::io::Write;
+
 use poise::serenity_prelude as serenity;
 
 pub mod setup;
@@ -32,7 +34,11 @@ async fn main() {
         Ok(data) => data,
         Err(e) => {
             println!("Error: {}", e);
-            return;
+            print!("Press enter to exit...");
+            std::io::stdout().flush().unwrap();
+            let mut input = String::new();
+            std::io::stdin().read_line(&mut input).unwrap();
+            std::process::exit(1);
         }
     };
     dbg!();
