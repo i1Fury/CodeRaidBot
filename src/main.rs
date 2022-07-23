@@ -1,14 +1,19 @@
-mod setup;
 mod commands;
+mod handler;
+mod setup;
 // use commands::*;
 
-use std::io::Write;
+use handler::CodeRaidHandler;
 use poise::serenity_prelude as serenity;
+use std::io::Write;
+use std::sync::Mutex;
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 // User data, which is stored and accessible in all command invocations
-pub struct Data {}
+pub struct Data {
+    raid: Mutex<CodeRaidHandler>,
+}
 
 #[poise::command(prefix_command)]
 async fn register(ctx: Context<'_>) -> Result<(), Error> {
@@ -47,7 +52,10 @@ async fn main() {
     let options = poise::FrameworkOptions {
         commands: vec![
             register(),
-            commands::code_raid::start(),
+            commands::code_raid::test(),
+            commands::code_raid::join(),
+            commands::code_raid::submit(),
+            commands::code_raid::leave(),
         ],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("!".into()),
@@ -64,7 +72,13 @@ async fn main() {
         .intents(
             serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT,
         )
-        .user_data_setup(move |_ctx, _ready, _framework| Box::pin(async move { Ok(Data {}) }));
+        .user_data_setup(move |_ctx, _ready, _framework| {
+            Box::pin(async move {
+                Ok(Data {
+                    raid: Mutex::new(CodeRaidHandler::new(data.1)),
+                })
+            })
+        });
 
     framework.run().await.unwrap();
 }
