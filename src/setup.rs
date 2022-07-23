@@ -3,7 +3,8 @@ extern crate reqwest;
 // use reqwest;
 use std::io::Read;
 use std::io::Write;
-type Error = Box<dyn std::error::Error + Send + Sync>;
+// type Error = Box<dyn std::error::Error + Send + Sync>;
+use crate::Error;
 
 const CODES: &str = "https://raw.githubusercontent.com/i1Fury/CodeRaidBot/master/bin/codes.txt";
 
