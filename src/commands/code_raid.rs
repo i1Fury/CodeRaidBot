@@ -159,6 +159,7 @@ async fn handle_interaction(http: sContext, mci: Arc<MessageComponentInteraction
 pub async fn open(ctx: Context<'_>) -> Result<(), Error> {
     let uuid = ctx.id();
     let codes_button_id = uuid + 1;
+    let backup_button_id = uuid + 2;
     // let avatar = ctx
     //     .discord()
     //     .http
@@ -174,8 +175,8 @@ pub async fn open(ctx: Context<'_>) -> Result<(), Error> {
         m.embed(|e| {
             e.title("Le Code Raid")
             // .url("https://github.com/i1Fury/CodeRaidBot")
-            .description("**Click the button below to join the raid.**")
-            .color(0x00ffff)
+            .description("**__Click the button below to join the raid.__**\n**Codes entered:** `321/10000`\n**Active raiders:** `32/45`")
+            .color(0xffffff)
             .thumbnail(avatar)
             .footer(|f| {
                 f.text("Support the dev at https://donate.elliotcs.dev/")
@@ -187,6 +188,11 @@ pub async fn open(ctx: Context<'_>) -> Result<(), Error> {
                     b.style(ButtonStyle::Success)
                         .label("Get codes")
                         .custom_id(codes_button_id)
+                })
+                .create_button(|b| {
+                    b.style(ButtonStyle::Danger)
+                        .label("Backup")
+                        .custom_id(backup_button_id)
                 })
                 // .create_select_menu(|sm| {
                 //     sm.options(|o| {
