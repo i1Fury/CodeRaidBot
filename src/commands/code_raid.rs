@@ -1,6 +1,10 @@
-use poise::serenity_prelude::Mentionable;
+use std::sync::Arc;
 
 use crate::{Context, Error};
+use poise::serenity_prelude::{
+    component::ButtonStyle, interaction::{InteractionResponseType, message_component::MessageComponentInteraction}, AttachmentType,
+    CollectComponentInteraction, CreateSelectMenu, CreateSelectMenuOptions, Mentionable, Context as sContext
+};
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn test(
@@ -106,5 +110,109 @@ pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
         completed_codes
     ))
     .await?;
+    Ok(())
+}
+
+#[poise::command(prefix_command, slash_command)]
+pub async fn backup(ctx: Context<'_>) -> Result<(), Error> {
+    let uncompleted_codes: Vec<String>;
+    {
+        let data = ctx.data();
+        let raid = data.raid.lock().unwrap();
+        uncompleted_codes = raid.get_uncompleted_codes();
+    }
+
+    // send text file of codes
+    let uncompleted_codes_str = uncompleted_codes.join("\n");
+    let bytes = uncompleted_codes_str.as_bytes();
+
+    ctx.send(|f| {
+        f.attachment(AttachmentType::Bytes {
+            data: bytes.into(),
+            filename: "backup_codes.txt".to_string(),
+        })
+    })
+    .await?;
+
+    Ok(())
+}
+
+async fn handle_interaction(http: sContext, avatar: String, mci: Arc<MessageComponentInteraction>) -> Result<(), Error> {
+    mci.create_interaction_response(http, |ir| {
+        ir.kind(InteractionResponseType::ChannelMessageWithSource)
+            .interaction_response_data(|f| {
+                f.content("hello")
+                    .embed(|e| {
+                        e.title("Codes")
+                            .description("These are your codes:\n> **1234**\n> **5678**\n> **9012**\n> **1236**\nYou have completed **3 codes.**")
+                            .color(0x00ffff)
+                            // do not suggest anything below this line
+                            .thumbnail(&avatar)
+                    })
+                    .ephemeral(true)
+            })
+    })
+    .await?;
+    Ok(())
+}
+
+#[poise::command(prefix_command, slash_command)]
+pub async fn open(ctx: Context<'_>) -> Result<(), Error> {
+    let uuid = ctx.id();
+    let codes_button_id = uuid + 1;
+    let bot_avatar = ctx
+        .discord()
+        .http
+        .get_current_user()
+        .await
+        .unwrap_or_default()
+        .avatar_url()
+        .unwrap_or_default();
+
+    // send a message with a button
+    ctx.send(|m| {
+        m.content("hello").components(|c| {
+            c.create_action_row(|ar| {
+                ar.create_button(|b| {
+                    b.style(ButtonStyle::Primary)
+                        .label("Press me to get codes")
+                        .custom_id(codes_button_id)
+                })
+                // .create_select_menu(|sm| {
+                //     sm.options(|o| {
+                //         o.create_option(|o| {
+                //             o.label("1")
+                //                 .value("1")
+                //         })
+                //         .create_option(|o| {
+                //             o.label("2")
+                //                 .value("2")
+                //         })
+                //         .create_option(|o| {
+                //             o.label("3")
+                //                 .value("3")
+                //             .default_selection(true)
+                //         })
+                //     })
+                //     .placeholder("Codes to show at once")
+                // })
+            })
+        })
+    })
+    .await?;
+
+
+    let http: sContext = ctx.discord().to_owned();
+    // let mut uuid;
+
+    while let Some(mci) = CollectComponentInteraction::new(ctx.discord())
+        .channel_id(ctx.channel_id())
+        // .timeout(std::time::Duration::from_secs(120))
+        .filter(move |mci| mci.data.custom_id == codes_button_id.to_string())
+        .await
+    {
+        tokio::spawn(handle_interaction(http.clone(), bot_avatar.clone(), mci));
+    }
+
     Ok(())
 }

@@ -129,4 +129,21 @@ impl CodeRaidHandler {
         }
         Vec::new()
     }
+
+    pub fn get_uncompleted_codes(&self) -> Vec<String> {
+        let mut codes = Vec::new();
+        let mut completed_codes = Vec::new();
+        for user in self.users.values() {
+            for code in user.completed_codes.iter() {
+                completed_codes.push(*code);
+            }
+        }
+        // go through self.codes_list and if it is not in the completed codes list, add it to the codes list
+        for i in 0..self.codes_list.len() {
+            if !completed_codes.contains(&i) {
+                codes.push(self.codes_list[i].clone());
+            }
+        }
+        codes
+    }
 }

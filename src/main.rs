@@ -56,6 +56,9 @@ async fn main() {
             commands::code_raid::join(),
             commands::code_raid::submit(),
             commands::code_raid::leave(),
+            commands::code_raid::backup(),
+            commands::code_raid::open(),
+
         ],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("!".into()),
