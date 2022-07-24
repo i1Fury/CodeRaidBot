@@ -137,7 +137,7 @@ pub async fn backup(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-async fn handle_interaction(http: sContext, avatar: String, mci: Arc<MessageComponentInteraction>) -> Result<(), Error> {
+async fn handle_interaction(http: sContext, mci: Arc<MessageComponentInteraction>) -> Result<(), Error> {
     mci.create_interaction_response(http, |ir| {
         ir.kind(InteractionResponseType::ChannelMessageWithSource)
             .interaction_response_data(|f| {
@@ -147,7 +147,6 @@ async fn handle_interaction(http: sContext, avatar: String, mci: Arc<MessageComp
                             .description("These are your codes:\n> **1234**\n> **5678**\n> **9012**\n> **1236**\nYou have completed **3 codes.**")
                             .color(0x00ffff)
                             // do not suggest anything below this line
-                            .thumbnail(&avatar)
                     })
                     .ephemeral(true)
             })
@@ -160,22 +159,33 @@ async fn handle_interaction(http: sContext, avatar: String, mci: Arc<MessageComp
 pub async fn open(ctx: Context<'_>) -> Result<(), Error> {
     let uuid = ctx.id();
     let codes_button_id = uuid + 1;
-    let bot_avatar = ctx
-        .discord()
-        .http
-        .get_current_user()
-        .await
-        .unwrap_or_default()
-        .avatar_url()
-        .unwrap_or_default();
+    // let avatar = ctx
+    //     .discord()
+    //     .http
+    //     .get_current_user()
+    //     .await
+    //     .unwrap_or_default()
+    //     .avatar_url()
+    //     .unwrap_or_default();
+    let avatar = ctx.author().avatar_url().unwrap_or_default();
 
     // send a message with a button
-    ctx.send(|m| {
-        m.content("hello").components(|c| {
+    let msg = ctx.send(|m| {
+        m.embed(|e| {
+            e.title("Le Code Raid")
+            // .url("https://github.com/i1Fury/CodeRaidBot")
+            .description("**Click the button below to join the raid.**")
+            .color(0x00ffff)
+            .thumbnail(avatar)
+            .footer(|f| {
+                f.text("Support the dev at https://donate.elliotcs.dev/")
+            })
+        })
+        .components(|c| {
             c.create_action_row(|ar| {
                 ar.create_button(|b| {
-                    b.style(ButtonStyle::Primary)
-                        .label("Press me to get codes")
+                    b.style(ButtonStyle::Success)
+                        .label("Get codes")
                         .custom_id(codes_button_id)
                 })
                 // .create_select_menu(|sm| {
@@ -201,6 +211,7 @@ pub async fn open(ctx: Context<'_>) -> Result<(), Error> {
     })
     .await?;
 
+    // dbg!(msg.edit(ctx, builder))
 
     let http: sContext = ctx.discord().to_owned();
     // let mut uuid;
@@ -211,7 +222,7 @@ pub async fn open(ctx: Context<'_>) -> Result<(), Error> {
         .filter(move |mci| mci.data.custom_id == codes_button_id.to_string())
         .await
     {
-        tokio::spawn(handle_interaction(http.clone(), bot_avatar.clone(), mci));
+        tokio::spawn(handle_interaction(http.clone(), mci));
     }
 
     Ok(())
