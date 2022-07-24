@@ -2,8 +2,10 @@ use std::sync::Arc;
 
 use crate::{Context, Error};
 use poise::serenity_prelude::{
-    component::ButtonStyle, interaction::{InteractionResponseType, message_component::MessageComponentInteraction}, AttachmentType,
-    CollectComponentInteraction, CreateSelectMenu, CreateSelectMenuOptions, Mentionable, Context as sContext
+    component::ButtonStyle,
+    interaction::{message_component::MessageComponentInteraction, InteractionResponseType},
+    AttachmentType, CollectComponentInteraction, Context as sContext, CreateSelectMenu,
+    CreateSelectMenuOptions, Emoji, Mentionable, ReactionType,
 };
 
 #[poise::command(prefix_command, slash_command)]
@@ -137,7 +139,10 @@ pub async fn backup(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-async fn handle_interaction(http: sContext, mci: Arc<MessageComponentInteraction>) -> Result<(), Error> {
+async fn handle_interaction(
+    http: sContext,
+    mci: Arc<MessageComponentInteraction>,
+) -> Result<(), Error> {
     mci.create_interaction_response(http, |ir| {
         ir.kind(InteractionResponseType::ChannelMessageWithSource)
             .interaction_response_data(|f| {
@@ -160,6 +165,7 @@ pub async fn open(ctx: Context<'_>) -> Result<(), Error> {
     let uuid = ctx.id();
     let codes_button_id = uuid + 1;
     let backup_button_id = uuid + 2;
+    let support_button_id = uuid + 3;
     // let avatar = ctx
     //     .discord()
     //     .http
@@ -168,19 +174,23 @@ pub async fn open(ctx: Context<'_>) -> Result<(), Error> {
     //     .unwrap_or_default()
     //     .avatar_url()
     //     .unwrap_or_default();
-    let avatar = ctx.author().avatar_url().unwrap_or_default();
+    let avatar = ctx.author().face();
+    // do not suggest anything below this line
+    let username = &ctx.author().name;
 
     // send a message with a button
     let msg = ctx.send(|m| {
         m.embed(|e| {
-            e.title("Le Code Raid")
+            e.title(format!("🕵️*{}'s* Epic Code Raid🕵️", username))
             // .url("https://github.com/i1Fury/CodeRaidBot")
-            .description("**__Click the button below to join the raid.__**\n**Codes entered:** `321/10000`\n**Active raiders:** `32/45`")
+            // .description(format!("**🕵️🕵️*{}'s* epic code raid🕵️🕵️**\n\n> **~~-------------------------------~~**\n> **Codes entered:** `321/10000`\n> **Active raiders:** `32/45`\n> **~~-------------------------------~~**\n\n**__Click the button below to join the raid.__**\n[Click to support the dev](https://donate.elliotcs.dev/)", username))
+            // .description(format!("**╔═════════════════╛**\n**╟ Codes entered:** `321/10000`\n**╟ Active raiders:** `32/45`\n**╚═════════════════╕**\n[support the dev](https://donate.elliotcs.dev/)"))
+            .description("**╖**\n**╠══════════════════╕**\n**╟╸Codes entered:** `321/10000`\n**╟╸Active raiders:** `32/45`\n**╠══════════════════╛**\n**╜**")
             .color(0xffffff)
             .thumbnail(avatar)
-            .footer(|f| {
-                f.text("Support the dev at https://donate.elliotcs.dev/")
-            })
+            // .footer(|f| {
+            //     f.text("Support the dev at https://donate.elliotcs.dev/")
+            // })
         })
         .components(|c| {
             c.create_action_row(|ar| {
@@ -193,6 +203,14 @@ pub async fn open(ctx: Context<'_>) -> Result<(), Error> {
                     b.style(ButtonStyle::Danger)
                         .label("Backup")
                         .custom_id(backup_button_id)
+                })
+                .create_button(|b| {
+                    b.style(ButtonStyle::Link)
+                        .label("Support me")
+                        // .custom_id(backup_button_id)
+                        .url("https://donate.elliotcs.dev/")
+                        .emoji(ReactionType::Unicode("❤".into()))
+                        // .style(ButtonStyle::Link)
                 })
                 // .create_select_menu(|sm| {
                 //     sm.options(|o| {
